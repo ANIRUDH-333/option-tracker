@@ -31,6 +31,35 @@ monitoring_status = {
 class UIOrderMonitor(SmartPollingMonitor):
     """Extended monitor that updates UI state."""
     
+    def _play_notification_sound(self):
+        """Play notification sound if available."""
+        try:
+            import platform
+            import subprocess
+            
+            # Only try to play sound on local development (macOS/Windows/Linux with audio)
+            if os.getenv('RENDER'):
+                # Skip audio on Render deployment
+                print("🔔 [AUDIO] New order notification (sound disabled in production)")
+                return
+                
+            system = platform.system()
+            if system == "Darwin":  # macOS
+                os.system('afplay /System/Library/Sounds/Glass.aiff &')
+            elif system == "Windows":
+                # Windows beep
+                import winsound
+                winsound.Beep(1000, 500)
+            elif system == "Linux":
+                # Try to use system beep or paplay
+                try:
+                    os.system('paplay /usr/share/sounds/alsa/Front_Left.wav &')
+                except:
+                    print("🔔 [AUDIO] New order detected (no audio available)")
+            
+        except Exception as e:
+            print(f"🔔 [AUDIO] New order detected (audio error: {e})")
+    
     def check_for_new_orders(self):
         """Override to update monitoring status."""
         global monitoring_status
@@ -44,8 +73,8 @@ class UIOrderMonitor(SmartPollingMonitor):
         """Override to add orders to UI display."""
         global latest_orders, all_orders, monitoring_status
         
-        # Play sound notification
-        os.system('afplay /System/Library/Sounds/Glass.aiff &')
+        # Play sound notification (only works locally on macOS)
+        self._play_notification_sound()
         
         # Format order for display
         formatted_order = {

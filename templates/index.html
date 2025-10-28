@@ -152,6 +152,43 @@
             background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
         }
 
+        /* Flash effect for new orders */
+        .notification-flash {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(16, 185, 129, 0.4);
+            animation: flashNotification 3s ease-in-out;
+            z-index: 1000;
+            font-weight: 600;
+        }
+
+        @keyframes flashNotification {
+            0% {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+
+            15% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+
+            85% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+        }
+
         .order-header {
             display: flex;
             justify-content: space-between;
@@ -416,9 +453,10 @@
                         `;
                     }).join('');
 
-                    // Play sound for new order (optional)
+                    // Play sound and show visual notification for new order
                     if (isNewOrder && previousOrderCount > 1) {
                         playNotificationSound();
+                        showVisualNotification(`New Order: ${data[0].symbol} - ${data[0].transaction_type}`);
                     }
                 }
             } catch (error) {
@@ -426,10 +464,61 @@
             }
         }
 
-        // Optional: Play notification sound
+        // Play notification sound
         function playNotificationSound() {
-            // You can add an audio element if you want sound notifications
-            console.log('🔔 New order detected!');
+            try {
+                // Create audio context and play a beep sound
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.frequency.value = 800; // Frequency in Hz
+                oscillator.type = 'sine';
+
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+
+                console.log('🔔 New order detected! (Audio played)');
+            } catch (error) {
+                console.log('🔔 New order detected! (Audio not available)');
+
+                // Fallback: Show browser notification if available
+                if ("Notification" in window && Notification.permission === "granted") {
+                    new Notification("New Order Detected!", {
+                        body: "A new trading order has been detected",
+                        icon: "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='%23007bff' d='M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zM7 7V5a1 1 0 0 1 2 0v2h2a1 1 0 0 1 0 2H9v2a1 1 0 0 1-2 0V9H5a1 1 0 0 1 0-2h2z'/%3e%3c/svg%3e"
+                    });
+                }
+            }
+        }
+
+        // Request notification permission on page load
+        if ("Notification" in window && Notification.permission === "default") {
+            Notification.requestPermission();
+        }
+
+        // Show visual notification
+        function showVisualNotification(message) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = 'notification-flash';
+            notification.textContent = `🔔 ${message}`;
+
+            // Add to page
+            document.body.appendChild(notification);
+
+            // Remove after animation
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 3000);
         }
 
         // Update every 2 seconds
