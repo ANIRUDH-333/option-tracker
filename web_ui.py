@@ -142,5 +142,6 @@ if __name__ == '__main__':
     thread = threading.Thread(target=start_monitoring, daemon=True)
     thread.start()
     
-    # Start Flask server
-    app.run(debug=False, host='0.0.0.0', port=5000)
+    # Start Flask server with production-ready settings
+    port = int(os.getenv('PORT', 5000))  # Use Render's PORT or default to 5000
+    app.run(debug=False, host='0.0.0.0', port=port)

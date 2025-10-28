@@ -2,10 +2,15 @@
 Configuration module for SmartAPI credentials and settings.
 """
 import os
-from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
+# Try to load environment variables from .env file (for local development)
+# In production, environment variables should be set directly in the deployment platform
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # python-dotenv not available (this is fine in production)
+    pass
 
 
 class Config:

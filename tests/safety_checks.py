@@ -100,12 +100,14 @@ def check_file_permissions():
     print("\n🔍 Checking file permissions...")
     
     required_files = [
-        '.env',
         'config.py',
         'smartapi_client.py',
         'smart_polling.py',
         'web_ui.py'
     ]
+    
+    # .env file is optional (production uses environment variables)
+    optional_files = ['.env']
     
     for file in required_files:
         if not os.path.exists(file):
@@ -114,6 +116,16 @@ def check_file_permissions():
         if not os.access(file, os.R_OK):
             print(f"  ❌ FAILED: {file} not readable")
             return False
+    
+    for file in optional_files:
+        if os.path.exists(file):
+            if not os.access(file, os.R_OK):
+                print(f"  ❌ FAILED: {file} not readable")
+                return False
+            else:
+                print(f"  ✅ {file} found and readable (development mode)")
+        else:
+            print(f"  ℹ️  {file} not found (production mode - using environment variables)")
     
     print("  ✅ All required files present and readable")
     return True

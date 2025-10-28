@@ -4,9 +4,15 @@ Run this to check if everything is configured correctly before starting.
 """
 import os
 import sys
-from dotenv import load_dotenv
 
-load_dotenv()
+# Try to load environment variables from .env file (for local development)
+# In production, environment variables should be set directly in the deployment platform
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # python-dotenv not available (this is fine in production)
+    pass
 
 
 def print_header(text):
@@ -25,20 +31,38 @@ def print_check(text, status, details=None):
 
 
 def check_environment_file():
-    """Check if .env file exists."""
-    print_header("STEP 1: Checking .env File")
+    """Check if .env file exists or environment variables are set."""
+    print_header("STEP 1: Checking Environment Configuration")
     
     env_exists = os.path.exists('.env')
     print_check(".env file exists", env_exists)
     
-    if not env_exists:
+    # Check if we have environment variables set directly (production mode)
+    has_env_vars = all([
+        os.getenv('API_KEY'),
+        os.getenv('CLIENT_ID'),
+        os.getenv('PASSWORD'),
+        os.getenv('TOTP_SECRET'),
+        os.getenv('SECRET_KEY')
+    ])
+    
+    if env_exists:
+        print_check("Running in development mode", True, "Using .env file")
+        return True
+    elif has_env_vars:
+        print_check("Running in production mode", True, "Using environment variables")
+        return True
+    else:
+        print_check("Environment configuration", False, "Neither .env file nor environment variables found")
         print("\n⚠️  ACTION REQUIRED:")
+        print("   For local development:")
         print("   1. Create a .env file in the project root")
         print("   2. Add your account credentials")
         print("   3. See QUICK_START_COPY_TRADING.md for template")
+        print("\n   For production deployment:")
+        print("   1. Set environment variables in your deployment platform")
+        print("   2. API_KEY, CLIENT_ID, PASSWORD, TOTP_SECRET, SECRET_KEY")
         return False
-    
-    return True
 
 
 def check_master_account():
