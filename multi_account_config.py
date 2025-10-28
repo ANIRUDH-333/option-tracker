@@ -5,9 +5,15 @@ Supports one master account and multiple follower accounts.
 import os
 import json
 from typing import Dict, List
-from dotenv import load_dotenv
 
-load_dotenv()
+# Try to load environment variables from .env file (for local development)
+# In production, environment variables should be set directly in the deployment platform
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # python-dotenv not available (this is fine in production)
+    pass
 
 
 class AccountConfig:
